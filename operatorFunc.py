@@ -1,4 +1,7 @@
-#calc
+from collections import deque
+from definitions import *
+
+
 
 def addToTree(tree, ty, val):
     tree.append({'type': ty, 'value': val})
@@ -21,9 +24,9 @@ def shuntingYardAlgo(lex, tree):
         token = lex[0]
         if token.isdigit():
             outputStack.append(token)
-            lex.pop(0)
+            lex.popleft()
         elif token in precedence:
-            lex.pop(0)
+            lex.popleft()
 
             if token is '(':
                 operatorStack.append(token)
@@ -52,10 +55,13 @@ def shuntingYardAlgo(lex, tree):
 
 
 def treeitizeShunting(outputStack):
-    tree = []
+    tree = deque([])
+    if len(outputStack) == 1:
+        tree = addToTree(tree, 'object', outputStack[0])
+        return tree, outputStack
     operator = outputStack.pop()
     if outputStack[-2:] == [x for x in outputStack[-2:] if x.isdigit()]:
-        tree = addToTree(tree, 'operator', operator)
+        tree = addToTree(tree, specialCharacters[operator], operator)
         par2 = outputStack.pop()
         par1 = outputStack.pop()
         tree = addToTree(tree, 'parameters', [par1, par2])
@@ -73,7 +79,9 @@ def treeitizeShunting(outputStack):
         pars, outputStack = treeitizeShunting(outputStack)
         for x in reversed(pars):
             params.insert(0,x)
-    tree = addToTree(tree, 'operator', operator)
+    tree = addToTree(tree, specialCharacters[operator], operator)
     tree = addToTree(tree, 'parameters', params)
     return tree, outputStack
+
+
 
