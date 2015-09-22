@@ -2,6 +2,7 @@ from collections import deque
 from definitions import *
 
 
+#***precedence should be global:w
 
 def addToTree(tree, ty, val):
     tree.append({'type': ty, 'value': val})
@@ -45,21 +46,27 @@ def shuntingYardAlgo(lex, tree):
                 operatorStack.append(token)
             else:
                 operatorStack.append(token)
-        else:
+        elif token in specialCharacters:
             shunt = False
+        else:
+            outputStack.append(token)
+            lex.popleft()
 
     while operatorStack:
         outputStack.append(operatorStack.pop())
-    tree = treeitizeShunting(outputStack)[0]
+    tree = treeitizeShunting(outputStack, precedence)[0]
     return lex, tree
 
 
-def treeitizeShunting(outputStack):
+def treeitizeShunting(outputStack, precedence):
     tree = deque([])
     if len(outputStack) == 1:
-        tree = addToTree(tree, 'object', outputStack[0])
+        #tree = addToTree(tree, 'object', int(outputStack[0]))
+        tree = addToTree(tree, 'object', 'number')
+        tree = addToTree(tree, 'parameters', int(outputStack[0]))
         return tree, outputStack
     operator = outputStack.pop()
+    #BaseCase
     if outputStack[-2:] == [x for x in outputStack[-2:] if x.isdigit()]:
         tree = addToTree(tree, specialCharacters[operator], operator)
         par2 = outputStack.pop()
@@ -67,16 +74,16 @@ def treeitizeShunting(outputStack):
         tree = addToTree(tree, 'parameters', [par1, par2])
         return tree, outputStack
     params = []
-    if outputStack[-1].isdigit():
+    if (outputStack[-1].isdigit() or outputStack[-1] not in precedence):
         params.append(outputStack.pop())
     else:
-        pars, outputStack = treeitizeShunting(outputStack)
+        pars, outputStack = treeitizeShunting(outputStack, precedence)
         for x in pars:
             params.append(x)
-    if outputStack[-1].isdigit():
+    if (outputStack[-1].isdigit() or outputStack[-1] not in precedence):
         params.insert(0, outputStack.pop())
     else:
-        pars, outputStack = treeitizeShunting(outputStack)
+        pars, outputStack = treeitizeShunting(outputStack, precedence)
         for x in reversed(pars):
             params.insert(0,x)
     tree = addToTree(tree, specialCharacters[operator], operator)
