@@ -15,7 +15,7 @@ if __name__ == "__main__":
         x = raw_input('>>> ')
         lex = lexitize.lexitize(x)
         print lex
-        tree = treeitize.treeitize(lex)
+        tree = treeitize.treeitize(lex)[0]
         print tree
         output = analyze.analyze(tree)
         if output is not None:

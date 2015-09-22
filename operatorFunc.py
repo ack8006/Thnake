@@ -28,7 +28,6 @@ def shuntingYardAlgo(lex, tree):
             lex.popleft()
         elif token in precedence:
             lex.popleft()
-
             if token is '(':
                 operatorStack.append(token)
             elif token is ')':
@@ -60,35 +59,21 @@ def shuntingYardAlgo(lex, tree):
 
 def treeitizeShunting(outputStack, precedence):
     tree = deque([])
-    if len(outputStack) == 1:
-        #tree = addToTree(tree, 'object', int(outputStack[0]))
+    if outputStack[-1].isdigit():
         tree = addToTree(tree, 'object', 'number')
-        tree = addToTree(tree, 'parameters', int(outputStack[0]))
+        tree = addToTree(tree, 'parameters', int(outputStack.pop()))
         return tree, outputStack
-    operator = outputStack.pop()
-    #BaseCase
-    if outputStack[-2:] == [x for x in outputStack[-2:] if x.isdigit()]:
-        tree = addToTree(tree, specialCharacters[operator], operator)
-        par2 = outputStack.pop()
-        par1 = outputStack.pop()
-        tree = addToTree(tree, 'parameters', [par1, par2])
+    elif outputStack[-1] not in precedence:
+        tree = addToTree(tree, 'variable', outputStack.pop())
         return tree, outputStack
-    params = []
-    if (outputStack[-1].isdigit() or outputStack[-1] not in precedence):
-        params.append(outputStack.pop())
     else:
-        pars, outputStack = treeitizeShunting(outputStack, precedence)
-        for x in pars:
-            params.append(x)
-    if (outputStack[-1].isdigit() or outputStack[-1] not in precedence):
-        params.insert(0, outputStack.pop())
-    else:
-        pars, outputStack = treeitizeShunting(outputStack, precedence)
-        for x in reversed(pars):
-            params.insert(0,x)
-    tree = addToTree(tree, specialCharacters[operator], operator)
-    tree = addToTree(tree, 'parameters', params)
+        tree = addToTree(tree, 'arithmetic', outputStack.pop())
+        val2, outputStack = treeitizeShunting(outputStack, precedence)
+        val1, outputStack = treeitizeShunting(outputStack, precedence)
+        values = deque([])
+        for x in [val1, val2]:
+            while x:
+                values.append(x.popleft())
+        tree = addToTree(tree, 'parameters', values)
     return tree, outputStack
-
-
 

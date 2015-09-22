@@ -29,6 +29,7 @@ specialCharacters = {'(': 'paren',#None
                      'if': 'if',
                      'True': 'boolean',
                      'False': 'boolean',
+                     'quit': 'quit',
 
                      }
 

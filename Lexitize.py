@@ -20,6 +20,8 @@ class Lexitize():
             inp = inp.replace('=  =', '==')
             inp = inp.replace('<  =', '<=')
             inp = inp.replace('>  =', '>=')
+            inp = inp.replace('<  >', '<>')
+            inp = inp.replace('!  =', '!=')
             return inp
 
         def cleanWhiteSpace(lex):
