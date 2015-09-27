@@ -6,7 +6,7 @@ class Treeitize():
     def __init__(self):
         pass
 
-    def treeitize(self, lex, variables=[], currentBranch=deque([]), held=[]):
+    def treeitize(self, lex, held=[]):
 
         def addToTree(tree, ty, val):
             tree.append({'type': ty, 'value': val})
@@ -14,23 +14,30 @@ class Treeitize():
 
         tree = deque([])
 
-        #****CurrentBranch currently not doing anything
-        #*should matter when looping, not recursing? maybe?
+        #*** Do I need Loop?
         while len(lex) > 0:
 
             curLex = lex.popleft()
             #print
             #print 'LEX: ' + str(lex)
             #print 'TREE: ' + str(tree)
-            #print 'ANALYZE'
-            #print currentBranch
-            #print held
-            #print curLex
+            #print 'HELD: ' + str(held)
+            #print 'CURLEX: ' + str(curLex)
             #print
 
+            #SPECIAL/BASE CASES
+            #**** should also handle if
+
             if (held and held[-1] == 'comparison' and curLex in [',',']']):
-                lex.append(curLex)
+                lex.appendleft(curLex)
                 return tree, lex, held
+
+            if (held and held[-1] == 'attribFunc' and curLex in
+                [x for x,y in specialCharacters.iteritems() if y in ['comparison', 'comma']]):
+
+                lex.appendleft(curLex)
+                return tree, lex, held
+
 
             #handle negative HERE
             if curLex.isdigit() or curLex == '-': #and not currentBranch:
@@ -39,30 +46,40 @@ class Treeitize():
                 tree += parTree
 
             # this is not right
-            elif curLex in ['(',')'] and not currentBranch:
+            elif curLex in ['(',')']: #and not currentBranch:
                 lex.appendleft(curLex)
                 lex, parTree = shuntingYardAlgo(lex, tree)
                 tree += parTree
 
             elif curLex not in specialCharacters:
-                held.append(curLex)
+                tree = addToTree(tree, 'variable', curLex)
+                #held.append(curLex)
                 #tree = addToTree(tree, 'variable', curLex)
 
             elif curLex in specialCharacters:
                 spCh = specialCharacters[curLex]
                 if spCh == 'variable':
-                    var = held.pop()
-                    valTree, lex, held = self.treeitize(lex)
-                    #currentBranch.append(spCh)
-                    tree = addToTree(tree, spCh, var)
+                    valTree, lex, held = self.treeitize(lex, held)
                     tree = addToTree(tree, 'parameters', valTree)
+
+                #gets here if variable then arithmetic sym
+                elif (spCh == 'arithmetic'):
+                    lex.appendleft(curLex)
+                    var = tree.pop()['value']
+                    lex.appendleft(var)
+                    lex, parTree = shuntingYardAlgo(lex, tree)
+                    tree += parTree
+
                 # STRINGS
                 elif spCh == 'string':
-                    stringList = [curLex]
-                    curPop = None
+                    stringList = []
+                    curPop = lex.popleft()
                     while curPop != curLex:
-                        curPop = lex.popleft()
+                        #bootleg fix, if there are many spaces, it only adds one
+                        if stringList:
+                            stringList.append(' ')
                         stringList.append(curPop)
+                        curPop = lex.popleft()
                     tree = addToTree(tree, 'object', spCh)
                     tree = addToTree(tree, 'parameters', ''.join(stringList))
 
@@ -74,18 +91,23 @@ class Treeitize():
                     tree = addToTree(tree, 'parameters', curLex)
 
                 elif spCh == 'comparison':
-                    par1 = tree.pop()
-                    obj1 = tree.pop()
-                    tree = addToTree(tree, spCh, curLex)
                     values = deque([])
-                    values.append(obj1)
-                    values.append(par1)
-                    held.append('comparison')
-                    #parTree = self.treeitize(lex, variables, currentBranch, held)
-                    parTree, lex, held = self.treeitize(lex, variables, currentBranch, held)
+                    popped = tree.pop()
+                    #this grabs the first full element which will be either
+                    #a variable or an object
+                    while popped['type'] not in ['variable','object']:
+                        values.appendleft(popped)
+                        popped = tree.pop()
+                    values.appendleft(popped)
 
-                    if isinstance(parTree, tuple):
-                        parTree, lex, held = parTree
+                    tree = addToTree(tree, spCh, curLex)
+
+                    held.append('comparison')
+                    parTree, lex, held = self.treeitize(lex, held)
+
+                    held.pop()
+
+
                     while parTree:
                         values.append(parTree.popleft())
                     if (held and held[-1] == 'comparison'):
@@ -93,31 +115,59 @@ class Treeitize():
                     tree = addToTree(tree, 'parameters', values)
 
                 elif spCh == 'list':
-                    lastHeld = None
-                    if held:
-                        lastHeld = held[-1]
-                    if ((lastHeld == '[' and curLex == ']') or
-                            (lastHeld == '{' and curLex == '}')):
+                    if (held and (held[-1] == '[' and curLex == ']')):
                         held.pop()
                         return tree, lex, held
-                    else:
-                        currentBranch.append(spCh)
+                    elif curLex == '[':
                         held.append(curLex)
                         tree = addToTree(tree, 'object', spCh)
-                        parTree, lex, held = self.treeitize(lex, variables, currentBranch, held)
-                        if (held and held[-1] == '['):
-                            held.pop()
+                        parTree, lex, held = self.treeitize(lex, held)
                         tree = addToTree(tree, 'parameters', parTree)
+                        #if not lex:
+                        #    return tree,lex,held
+
+                elif spCh == 'conditional':
+                    held.append(curLex)
+                    tree = addToTree(tree, 'conditional', curLex)
+                    conTree, lex, held = self.treeitize(lex, held)
+                    parTree, lex, held = self.treeitize(lex, held)
+
+                    values = deque([])
+                    for x in [conTree, parTree]:
+                        while x:
+                            values.append(x.popleft())
+                    tree = addToTree(tree, 'parameters', values)
+
+                elif spCh == 'structure':
+                    if curLex == '{':
+                        #if (held and held[-1] =='comparison'):
+                        #    held.pop()
+                        held.append(curLex)
+                        return tree, lex, held
+                    elif curLex == '}':
+                        held.pop()
+                        return tree, lex, held
+
+                elif spCh == 'dot':
+                    held.append('attribFunc')
+                    attribFunc = lex.popleft()
+                    attribVal, lex, held = self.treeitize(lex, held)
+                    held.pop()
+
+                    tree = addToTree(tree, 'attribFunc', attribFunc)
+                    tree = addToTree(tree, 'parameters', attribVal)
+
+                #elif spCh == 'linebreak':
+                #    if held:
+                #        return tree, lex, held
+                #    if lex:
+                #        parTree,lex,held = self.treeitize(lex)
+                #    while parTree:
+                #        tree.append(parTree.popleft())
+                #    return tree, lex, held
 
 
-        if (held and not lex):
-            tree = addToTree(tree, 'variable', held.pop())
-            #return tree
-        #    return tree, lex, held
+        #if (held and not tree and held[-1] not in specialCharacters and not lex):
+        #    tree = addToTree(tree, 'variable', held.pop())
 
-        #if lex or held:
-        #    return tree, lex, held
-        #else:
-        #    #return tree
-        #    return tree, lex, held
         return tree, lex, held

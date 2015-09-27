@@ -23,16 +23,32 @@ class Analyze():
             elif topValue == 'list':
                 newList = []
                 #***This deque prevents dict overwrite scope problem, not sure
-                #where there is a problem in the first place
-                values = deque(parVal)
-                while values:
-                    result = self.analyze(values)
-                    newList.append(result)
+                #why there is a problem in the first place
+                values = deque([])
+                parVal = deque(parVal)
+                objCount = 0
+                while parVal:
+                    if parVal[0]['type'] in ['object', 'arithmetic',
+                                             'comparison', 'variable']:
+                        objCount +=1
+                    if objCount <= 1:
+                        values.append(parVal.popleft())
+                    if objCount > 1 or not parVal:
+                        result = self.analyze(values)
+                        newList.append(result)
+                        objCount = 0
+                        values = deque([])
                 return newList
 
         def analyzeOpComp(operator, values):
-            #pops first value pair into new deque
-            tree1 = deque([values.popleft() for _i in xrange(2)])
+            #finds two values
+            tree1 = deque([values.popleft()])
+            while values:
+                if values[0]['type'] in ['object','arithmetic','variable']:
+                    break
+                else:
+                    tree1.append(values.popleft())
+
             val1 = self.analyze(tree1)
             val2 = self.analyze(values)
             return eval(str(val1) + operator + str(val2))
@@ -43,6 +59,18 @@ class Analyze():
             if varType == 'list':
                 var = createObjTree(var)
             return varType, var
+
+        def analyzeConditional(conditional, parVal):
+            if conditional == 'if':
+                compVal = analyzeOpComp(parVal.popleft()['value'],
+                                        parVal.popleft()['value'])
+                if compVal:
+                    return self.analyze(parVal)
+
+        def analyzeAttrib(result, attrib, parVal):
+            if attrib == 'get':
+                param = self.analyze(parVal)
+            return eval(str(result)+'['+str(param)+']')
 
         def getVarType(var):
             varType = None
@@ -81,8 +109,10 @@ class Analyze():
             parameters = tree.popleft()
             result = analyzeOpComp(topValue, parameters['value'])
 
+        #***reduce to 2 lines and sub function
         elif topType == 'variable':
             parameters = None
+            #***THIS ASSUMES VAR LAST ITEM SHOULD PUT BACK IF NOT PARAMETERS
             if tree:
                 parameters = tree.popleft()
             if (parameters and parameters['type'] == 'parameters'):
@@ -92,9 +122,19 @@ class Analyze():
                 varTree = addToTree(varTree, 'parameters', objValue)
                 self.scope.add(topValue, varTree)
             else:
+                if parameters:
+                    tree.appendleft(parameters)
                 varTree = getVariable(topValue)
-                #DEQUE index access as ends is O(1)
-                result = analyzeObject(varTree[0]['value'],
-                                       varTree[1]['value'])
+
+                result = self.analyze(varTree)
+
+        elif topType == 'conditional':
+            parameters = tree.popleft()
+            result = analyzeConditional(topValue, parameters['value'])
+
+        if tree and isinstance(result, (list,basestring)):
+            result = analyzeAttrib(result,
+                                   tree.popleft()['value'],
+                                   tree.popleft()['value'])
 
         return result

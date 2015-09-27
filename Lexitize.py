@@ -15,6 +15,7 @@ class Lexitize():
             for char in [x for x,y in specialCharacters.iteritems()
                          if y not in excludeDef]:
                 inp = inp.replace(char, ' '+char+' ')
+
             #special case
             inp = inp.replace('*  *', '**')
             inp = inp.replace('=  =', '==')
