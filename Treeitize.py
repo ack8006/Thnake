@@ -2,6 +2,10 @@ from collections import deque
 from definitions import *
 from operatorFunc import shuntingYardAlgo, treeitizeShunting
 
+#def addToTree(tree, ty, val):
+#    tree.append({'type': ty, 'value': val})
+#    return tree
+
 class Treeitize():
     def __init__(self):
         pass
@@ -63,6 +67,9 @@ class Treeitize():
                     tree = addToTree(tree, 'parameters', valTree)
 
                 #gets here if variable then arithmetic sym
+
+
+                #****Needed or loop?
                 elif (spCh == 'arithmetic'):
                     lex.appendleft(curLex)
                     var = tree.pop()['value']
@@ -95,7 +102,7 @@ class Treeitize():
                     popped = tree.pop()
                     #this grabs the first full element which will be either
                     #a variable or an object
-                    while popped['type'] not in ['variable','object']:
+                    while popped['type'] not in ['variable','object', 'arithmetic']:
                         values.appendleft(popped)
                         popped = tree.pop()
                     values.appendleft(popped)
@@ -110,8 +117,8 @@ class Treeitize():
 
                     while parTree:
                         values.append(parTree.popleft())
-                    if (held and held[-1] == 'comparison'):
-                        held.pop()
+                    #if (held and held[-1] == 'comparison'):
+                    #    held.pop()
                     tree = addToTree(tree, 'parameters', values)
 
                 elif spCh == 'list':
@@ -130,10 +137,11 @@ class Treeitize():
                     held.append(curLex)
                     tree = addToTree(tree, 'conditional', curLex)
                     conTree, lex, held = self.treeitize(lex, held)
-                    parTree, lex, held = self.treeitize(lex, held)
+                    ifTree, lex, held = self.treeitize(lex, held)
+                    elseTree, lex, held = self.treeitize(lex, held)
 
                     values = deque([])
-                    for x in [conTree, parTree]:
+                    for x in [conTree, ifTree, elseTree]:
                         while x:
                             values.append(x.popleft())
                     tree = addToTree(tree, 'parameters', values)
@@ -156,6 +164,26 @@ class Treeitize():
 
                     tree = addToTree(tree, 'attribFunc', attribFunc)
                     tree = addToTree(tree, 'parameters', attribVal)
+
+                elif spCh == 'loop':
+                    held.append('loop')
+                    tree = addToTree(tree, spCh, 'for')
+                    listTree, lex, held = self.treeitize(lex, held)
+                    actionTree, lex, held = self.treeitize(lex, held)
+
+                    #***TREE FUNCT to consolidate multiple trees
+                    values = deque([])
+                    for x in [listTree, actionTree]:
+                        while x:
+                            values.append(x.popleft())
+                    tree = addToTree(tree, 'parameters', values)
+
+
+                #elif spCh == 'loopParam' and held[-1] == 'loop':
+                #    pass
+
+
+
 
                 #elif spCh == 'linebreak':
                 #    if held:

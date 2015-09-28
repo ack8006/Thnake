@@ -50,6 +50,18 @@ class TestComparison(unittest.TestCase):
         x = '15<=7'
         assert(run_program(x) == False)
 
+    def test_arithmetic_cond1(self):
+        x = '3+4==7'
+        assert(run_program(x) == True)
+
+    def test_arithmetic_cond2(self):
+        x = '7==3+4'
+        assert(run_program(x) == True)
+
+    def test_arithmetic_cond3(self):
+        x = '[1,2,3].get(0) == 1'
+        assert(run_program(x) == True)
+
 
 
 

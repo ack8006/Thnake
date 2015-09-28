@@ -61,11 +61,45 @@ class Analyze():
             return varType, var
 
         def analyzeConditional(conditional, parVal):
-            if conditional == 'if':
-                compVal = analyzeOpComp(parVal.popleft()['value'],
-                                        parVal.popleft()['value'])
-                if compVal:
-                    return self.analyze(parVal)
+            #true or false to conditional
+            compVal = analyzeOpComp(parVal.popleft()['value'],
+                                    parVal.popleft()['value'])
+
+            ifVal = deque([parVal.popleft()])
+            #***Get list object
+            while parVal:
+                if parVal[0]['type'] in ['arithmetic', 'object', 'variable',
+                                         'comparison', 'conditional']:
+                    ifVal.append(parVal.popleft())
+                else:
+                    ifVal.append(parVal.popleft())
+                    break
+
+            if compVal:
+                return self.analyze(ifVal)
+            elif not compVal and parVal:
+                return self.analyze(parVal)
+
+        def analyzeLoop(loop, parVal):
+            #if loop == 'for':
+            loopVar = parVal.popleft()
+            loopList = deque([])
+            #***get list object
+            while parVal:
+                if parVal[0]['type'] in ['arithmetic', 'object', 'variable',
+                                         'comparison', 'conditional']:
+                    loopList.append(parVal.popleft())
+                else:
+                    loopList.append(parVal.popleft())
+                    break
+
+            print loopList
+            loopList = self.analyze(loopList)
+            for x in loopList:
+                print x
+
+
+
 
         def analyzeAttrib(result, attrib, parVal):
             if attrib == 'get':
@@ -131,6 +165,11 @@ class Analyze():
         elif topType == 'conditional':
             parameters = tree.popleft()
             result = analyzeConditional(topValue, parameters['value'])
+
+        elif topType == 'loop':
+            parameters = tree.popleft()
+            result = analyzeLoop(topValue, parameters['value'])
+
 
         if tree and isinstance(result, (list,basestring)):
             result = analyzeAttrib(result,

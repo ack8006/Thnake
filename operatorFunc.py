@@ -46,6 +46,10 @@ def shuntingYardAlgo(lex, tree):
             else:
                 operatorStack.append(token)
         elif token in specialCharacters:
+            #***ONLY IN SPECIFIC CASES
+            #lex.appendleft(token)
+
+
             shunt = False
         else:
             outputStack.append(token)
