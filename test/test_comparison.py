@@ -74,13 +74,13 @@ class TestComparison(unittest.TestCase):
         x = '[1,2,3]==[1,4,3]'
         assert(run_program(x) == False)
 
-    #def test_string(self):
-    #    x = '"test"=="test"'
-    #    assert(run_program(x) == True)
+    def test_string(self):
+        x = '"test"=="test"'
+        assert(run_program(x) == True)
 
-    #def test_string_fail(self):
-    #    x = '"test"=="tasest"'
-    #    assert(run_program(x) == False)
+    def test_string_fail(self):
+        x = '"test"=="tasest"'
+        assert(run_program(x) == False)
 
 def main():
     unittest.main()

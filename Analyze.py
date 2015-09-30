@@ -1,5 +1,7 @@
 from collections import deque
 from Scope import Scope
+from Lexitize import Lexitize
+from Treeitize import Treeitize
 import copy
 
 class Analyze():
@@ -8,120 +10,110 @@ class Analyze():
 
     def analyze(self, tree):
 
-        def getVariable(var):
-            if self.scope.get(var):
-                return copy.deepcopy(self.scope.get(var))
-            else:
-                raise IndexError
+        def simplifyObject(objectString):
+            objLex = Lexitize().lexitize(str(objectString))
+            tree = Treeitize().treeitize(objLex)[0]
+            return tree
 
-        def analyzeObject(topValue, parVal):
+        def analyzeObject(objectVariable):
+            topValue = objectVariable.popleft()['value']
+            parVal = objectVariable.popleft()['value']
+
             if topValue in ['number', 'boolean', 'string']:
                 return parVal
             elif topValue == 'list':
                 newList = []
-                #***This deque prevents dict overwrite scope problem, not sure
-                #why there is a problem in the first place
-                values = deque([])
-                parVal = parVal
-                objCount = 0
                 while parVal:
-                    if parVal[0]['type'] in ['object', 'arithmetic',
-                                             'comparison', 'variable']:
-                        objCount +=1
-                    if objCount <= 1:
-                        values.append(parVal.popleft())
-                    if objCount > 1 or not parVal:
-                        result = self.analyze(values)
-                        newList.append(result)
-                        objCount = 0
-                        values = deque([])
+                    newList.append(self.analyze(parVal.popLeftObject()))
                 return newList
 
-        def analyzeOpComp(operator, values):
-            #finds two values
-            tree1 = deque([values.popleft()])
-            while values:
-                if values[0]['type'] in ['object','arithmetic','variable']:
-                    break
-                else:
-                    tree1.append(values.popleft())
+        def analyzeVariable(objectVariable):
+            variable = objectVariable.popleft()
+            variableValue = None
+            if objectVariable:
+                variableValue = objectVariable.pop()['value']
+                simplifiedVariable = simplifyObject(self.analyze(variableValue))
+                self.scope.add(variable['value'],
+                               simplifiedVariable)
+            else:
+                varTree = self.scope.get(variable['value'])
+                if varTree == None:
+                    raise IndexError
+                return self.analyze(varTree)
 
-            val1 = self.analyze(tree1)
-            val2 = self.analyze(values)
+        def analyzeOpComp(objectVariable):
+            operator = objectVariable.popleft()['value']
+            values = objectVariable.popleft()['value']
+
+            val1 = self.analyze(values.popLeftObject())
+            val2 = self.analyze(values.popLeftObject())
+            if isinstance(val1, basestring):
+                val1 = "'{}'".format(val1)
+            if isinstance(val2, basestring):
+                val2 = "'{}'".format(val2)
             return eval(str(val1) + operator + str(val2))
 
-        def analyzeConditional(conditional, parVal):
+        def analyzeConditional(objectVariable):
+            conditional = objectVariable.popleft()['value']
+            parVal = objectVariable.popleft()['value']
+
             #true or false to conditional
-            compVal = analyzeOpComp(parVal.popleft()['value'],
-                                    parVal.popleft()['value'])
+            compVal = analyzeOpComp(parVal.popLeftObject())
 
-            ifVal = deque([parVal.popleft()])
-            #***Get list object
-            while parVal:
-                if parVal[0]['type'] in ['arithmetic', 'object', 'variable',
-                                         'comparison', 'conditional']:
-                    ifVal.append(parVal.popleft())
-                else:
-                    ifVal.append(parVal.popleft())
-                    break
-
+            ifValue = parVal.popLeftObject()
             if compVal:
-                return self.analyze(ifVal)
+                return self.analyze(ifValue)
             elif not compVal and parVal:
-                return self.analyze(parVal)
+                elseValue = parVal.popLeftObject()
+                return self.analyze(elseValue)
 
-        def analyzeLoop(loop, parVal):
-            #if loop == 'for':
-            loopVar = parVal.popleft()
-            loopList = deque([])
-            #***get list object
-            while parVal:
-                if parVal[0]['type'] in ['arithmetic', 'object', 'variable',
-                                         'comparison', 'conditional']:
-                    loopList.append(parVal.popleft())
-                else:
-                    loopList.append(parVal.popleft())
-                    break
+        def analyzeLoop(objectVariable):
+            loop = objectVariable.popleft()['value']
+            parVal = objectVariable.popleft()['value']
+
+            loopVar = parVal.popleft()['value']
+            loopList = parVal.popLeftObject()
+
+            variableExists = False
+            if self.scope.get(loopVar):
+                variableExists = True
 
             loopList = self.analyze(loopList)
-            print 'PV'
-            print parVal
-            for x in loopList:
-                print x
+            loopList = simplifyObject(loopList).pop()['value']
 
-        def analyzeAttrib(result, attrib, parVal):
-            if attrib == 'get':
-                param = self.analyze(parVal)
-            return eval(str(result)+'['+str(param)+']')
+            while loopList:
+                currentVarIteration = loopList.popLeftObject()
+                self.scope.add(loopVar, currentVarIteration)
+                result = self.analyze(copy.deepcopy(parVal))
+                if result is not None:
+                    print result
+            if not variableExists:
+                self.scope.pop(loopVar)
 
+        def analyzeAttribFunc(objectVariable):
+            attribFunc = objectVariable.popleft()['value']
+            parVal = objectVariable.popleft()['value']
+            functionParameterTree = parVal.popleft()
+            functionObjectTree = parVal.pop()
+
+            functionParameter = self.analyze(functionParameterTree)
+            functionObject = self.analyze(functionObjectTree)
+            return eval(str(functionObject) + '['+str(functionParameter)+']')
 
 
         typeAnalysis = {
             'arithmetic': analyzeOpComp,
             'comparison': analyzeOpComp,
             'object': analyzeObject,
+            'variable': analyzeVariable,
             'conditional': analyzeConditional,
-            'loop': analyzeLoop
+            'loop': analyzeLoop,
+            'attribFunc': analyzeAttribFunc,
         }
 
         result = None
-        top = tree.popleft()
-        topType = top['type']
-        topValue = top['value']
+        currentObject = tree.popLeftObject()
+        currentType = currentObject[0]['type']
 
-        if topType in typeAnalysis:
-            result = typeAnalysis[topType](topValue, tree.popleft()['value'])
-
-        elif topType == 'variable':
-            if tree and tree[0]['type'] == 'parameters':
-                self.scope.add(topValue, tree.popleft()['value'])
-            else:
-                varTree = getVariable(topValue)
-                result = self.analyze(varTree)
-
-        while tree and isinstance(result, (list,basestring)):
-            result = analyzeAttrib(result,
-                                   tree.popleft()['value'],
-                                   tree.popleft()['value'])
-
-        return result
+        if currentType in typeAnalysis:
+            return typeAnalysis[currentType](currentObject)

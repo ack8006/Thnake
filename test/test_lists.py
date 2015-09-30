@@ -47,6 +47,9 @@ class TestArithmetic(unittest.TestCase):
         x = '[[1,2,3].get(1), 80]'
         assert(run_program(x) == [2, 80])
 
+    def test_internal_conditional(self):
+        x = '[1,2, if 3==3 {True}{False}, 5]'
+        assert(run_program(x) == [1,2,True,5])
 
 
 

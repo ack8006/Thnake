@@ -1,12 +1,9 @@
-from collections import deque
+#from collections import deque
 from definitions import *
+from Tree import Tree
 
 
 #***precedence should be global:w
-
-def addToTree(tree, ty, val):
-    tree.append({'type': ty, 'value': val})
-    return tree
 
 def shuntingYardAlgo(lex, tree):
     outputStack = []
@@ -21,7 +18,7 @@ def shuntingYardAlgo(lex, tree):
                     ')': [0, 'L']
                     }
     shunt = True
-    while shunt and len(lex) >0:
+    while len(lex) >0:
         token = lex[0]
         if token.isdigit():
             outputStack.append(token)
@@ -46,11 +43,7 @@ def shuntingYardAlgo(lex, tree):
             else:
                 operatorStack.append(token)
         elif token in specialCharacters:
-            #***ONLY IN SPECIFIC CASES
-            #lex.appendleft(token)
-
-
-            shunt = False
+            break
         else:
             outputStack.append(token)
             lex.popleft()
@@ -62,22 +55,22 @@ def shuntingYardAlgo(lex, tree):
 
 
 def treeitizeShunting(outputStack, precedence):
-    tree = deque([])
+    tree = Tree()
     if outputStack[-1].isdigit():
-        tree = addToTree(tree, 'object', 'number')
-        tree = addToTree(tree, 'parameters', int(outputStack.pop()))
+        tree.addToTree('object', 'number')
+        tree.addToTree('parameters', int(outputStack.pop()))
         return tree, outputStack
     elif outputStack[-1] not in precedence:
-        tree = addToTree(tree, 'variable', outputStack.pop())
+        tree.addToTree('variable', outputStack.pop())
         return tree, outputStack
     else:
-        tree = addToTree(tree, 'arithmetic', outputStack.pop())
+        tree.addToTree('arithmetic', outputStack.pop())
         val2, outputStack = treeitizeShunting(outputStack, precedence)
         val1, outputStack = treeitizeShunting(outputStack, precedence)
-        values = deque([])
+        values = Tree([])
         for x in [val1, val2]:
             while x:
                 values.append(x.popleft())
-        tree = addToTree(tree, 'parameters', values)
+        tree.addToTree('parameters', values)
     return tree, outputStack
 

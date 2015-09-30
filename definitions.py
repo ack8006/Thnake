@@ -43,6 +43,14 @@ specialCharacters = OrderedDict((
 
                      ))
 
+objectTypes = [
+    'arithmetic',
+    'comparison',
+    'object',
+    'variable',
+    'conditional',
+]
+
 
 typeAnalysis = {
     'arithmetic': None,
