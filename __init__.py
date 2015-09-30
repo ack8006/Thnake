@@ -3,6 +3,7 @@ from Treeitize import Treeitize
 from Analyze import Analyze
 from collections import deque
 
+
 def run_program(x):
     lexitize = Lexitize()
     treeitize = Treeitize()

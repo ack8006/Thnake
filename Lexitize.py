@@ -1,35 +1,42 @@
 from collections import deque
 from definitions import *
+import re
 
 
 class Lexitize():
     def __init__(self):
         pass
 
+    @staticmethod
+    def cleanWhiteSpace(lex):
+        lex = [x for x in lex if x not in [' ','']]
+        return lex
+
+    @staticmethod
+    def splitLexPieces(lexPieces, spCh):
+        splitLex = []
+        for item in lexPieces:
+            if item in specialCharacters.keys():
+                splitLex.append(item)
+                #skip ahead for string so don't accidentally analyze inside
+                if specialCharacters[item] == 'string':
+                    splitLex.append(lexPieces.next())
+                    splitLex.append(lexPieces.next())
+            else:
+                #inserts split item and pops last one off
+                for i in item.split(spCh):
+                    splitLex.append(i)
+                    splitLex.append(spCh)
+                splitLex.pop()
+        return splitLex
+
     def lexitize(self, inp):
-
-        #***parses in out of a string of 'string'
-        #***only add to arith and comparison and others that need it
-        def spCharSpaces(inp):
-            excludeDef= ['comparisonWord', 'function', 'if', 'bool']
-            for char in [x for x,y in specialCharacters.iteritems()
-                         if y not in excludeDef]:
-                inp = inp.replace(char, ' '+char+' ')
-
-            #special case
-            inp = inp.replace('*  *', '**')
-            inp = inp.replace('=  =', '==')
-            inp = inp.replace('<  =', '<=')
-            inp = inp.replace('>  =', '>=')
-            inp = inp.replace('<  >', '<>')
-            inp = inp.replace('!  =', '!=')
-            return inp
-
-        def cleanWhiteSpace(lex):
-            lex = [x for x in lex if x != '']
-            return lex
-
-        inp = spCharSpaces(inp)
-        lexPieces = inp.split(' ')
-        lexPieces = cleanWhiteSpace(lexPieces)
+        lexPieces = [inp]
+        for x in specialCharacters.keys():
+            lexPieces = self.splitLexPieces(iter(lexPieces), x)
+        lexPieces = self.cleanWhiteSpace(lexPieces)
         return deque(lexPieces)
+
+
+
+

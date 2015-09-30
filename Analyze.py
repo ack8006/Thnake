@@ -1,5 +1,6 @@
 from collections import deque
 from Scope import Scope
+import copy
 
 class Analyze():
     def __init__(self):
@@ -7,13 +8,9 @@ class Analyze():
 
     def analyze(self, tree):
 
-        def addToTree(tree, ty, val):
-            tree.append({'type':ty,'value':val})
-            return tree
-
         def getVariable(var):
             if self.scope.get(var):
-                return deque(self.scope.get(var))
+                return copy.deepcopy(self.scope.get(var))
             else:
                 raise IndexError
 
@@ -25,7 +22,7 @@ class Analyze():
                 #***This deque prevents dict overwrite scope problem, not sure
                 #why there is a problem in the first place
                 values = deque([])
-                parVal = deque(parVal)
+                parVal = parVal
                 objCount = 0
                 while parVal:
                     if parVal[0]['type'] in ['object', 'arithmetic',
@@ -52,13 +49,6 @@ class Analyze():
             val1 = self.analyze(tree1)
             val2 = self.analyze(values)
             return eval(str(val1) + operator + str(val2))
-
-        def analyzeVariable(parVal):
-            var = self.analyze(parVal)
-            varType = getVarType(var)
-            if varType == 'list':
-                var = createObjTree(var)
-            return varType, var
 
         def analyzeConditional(conditional, parVal):
             #true or false to conditional
@@ -93,85 +83,43 @@ class Analyze():
                     loopList.append(parVal.popleft())
                     break
 
-            print loopList
             loopList = self.analyze(loopList)
+            print 'PV'
+            print parVal
             for x in loopList:
                 print x
-
-
-
 
         def analyzeAttrib(result, attrib, parVal):
             if attrib == 'get':
                 param = self.analyze(parVal)
             return eval(str(result)+'['+str(param)+']')
 
-        def getVarType(var):
-            varType = None
-            #***eventually replace
-            #huh, bool is a subclass of int
-            if isinstance(var, bool):
-                varType = 'boolean'
-            elif isinstance(var, (int, long, float, complex)):
-                varType = 'number'
-            elif isinstance(var, basestring):
-                varType = 'string'
-            elif isinstance(var, list):
-                varType = 'list'
-            return varType
 
-        def createObjTree(variables):
-            varTree = deque([])
-            for x in variables:
-                varType = getVarType(x)
-                varTree = addToTree(varTree, 'object', varType)
-                varTree = addToTree(varTree, 'parameters', x)
-            return varTree
 
+        typeAnalysis = {
+            'arithmetic': analyzeOpComp,
+            'comparison': analyzeOpComp,
+            'object': analyzeObject,
+            'conditional': analyzeConditional,
+            'loop': analyzeLoop
+        }
 
         result = None
         top = tree.popleft()
         topType = top['type']
         topValue = top['value']
 
-        #check if in objects and return actual val
-        if topType == 'object':
-            parameters = tree.popleft()
-            result = analyzeObject(topValue, parameters['value'])
+        if topType in typeAnalysis:
+            result = typeAnalysis[topType](topValue, tree.popleft()['value'])
 
-        elif topType in ['arithmetic', 'comparison']:
-            parameters = tree.popleft()
-            result = analyzeOpComp(topValue, parameters['value'])
-
-        #***reduce to 2 lines and sub function
         elif topType == 'variable':
-            parameters = None
-            #***THIS ASSUMES VAR LAST ITEM SHOULD PUT BACK IF NOT PARAMETERS
-            if tree:
-                parameters = tree.popleft()
-            if (parameters and parameters['type'] == 'parameters'):
-                objType, objValue = analyzeVariable(parameters['value'])
-                varTree = deque([])
-                varTree = addToTree(varTree, 'object', objType)
-                varTree = addToTree(varTree, 'parameters', objValue)
-                self.scope.add(topValue, varTree)
+            if tree and tree[0]['type'] == 'parameters':
+                self.scope.add(topValue, tree.popleft()['value'])
             else:
-                if parameters:
-                    tree.appendleft(parameters)
                 varTree = getVariable(topValue)
-
                 result = self.analyze(varTree)
 
-        elif topType == 'conditional':
-            parameters = tree.popleft()
-            result = analyzeConditional(topValue, parameters['value'])
-
-        elif topType == 'loop':
-            parameters = tree.popleft()
-            result = analyzeLoop(topValue, parameters['value'])
-
-
-        if tree and isinstance(result, (list,basestring)):
+        while tree and isinstance(result, (list,basestring)):
             result = analyzeAttrib(result,
                                    tree.popleft()['value'],
                                    tree.popleft()['value'])

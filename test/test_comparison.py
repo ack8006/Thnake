@@ -58,12 +58,29 @@ class TestComparison(unittest.TestCase):
         x = '7==3+4'
         assert(run_program(x) == True)
 
-    def test_arithmetic_cond3(self):
+    def test_array_access(self):
         x = '[1,2,3].get(0) == 1'
         assert(run_program(x) == True)
 
+    def test_array_access2(self):
+        x = '[[1],2,3].get(0) == [1]'
+        assert(run_program(x) == True)
 
+    def test_list(self):
+        x = '[1,2,3]==[1,2,3]'
+        assert(run_program(x) == True)
 
+    def test_list_fail(self):
+        x = '[1,2,3]==[1,4,3]'
+        assert(run_program(x) == False)
+
+    #def test_string(self):
+    #    x = '"test"=="test"'
+    #    assert(run_program(x) == True)
+
+    #def test_string_fail(self):
+    #    x = '"test"=="tasest"'
+    #    assert(run_program(x) == False)
 
 def main():
     unittest.main()

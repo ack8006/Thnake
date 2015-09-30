@@ -27,10 +27,6 @@ if __name__ == "__main__":
     x = 'Hello'
     while x != 'quit':
         x = raw_input('>>> ')
-        if not x:
-            x = '''x = 2
-                    y = 5
-                    y'''
         print x
         lex = lexitize.lexitize(x)
         print lex
