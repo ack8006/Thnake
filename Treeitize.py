@@ -1,4 +1,3 @@
-#from collections import deque
 from definitions import *
 from operatorFunc import shuntingYardAlgo, treeitizeShunting
 from Tree import Tree

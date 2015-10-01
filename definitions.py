@@ -27,18 +27,20 @@ specialCharacters = OrderedDict((
                      ('}', 'structure'),
                      ('.', 'dot'),#None
                      ('get', 'attribFunc'),
-                     ('def', 'function'),
+                     #('append', 'attribFunc'),
+                     #('remove', 'attribFunc'),
+                     #('def', 'function'),
                      #('is', 'comparisonWord'),
                      #('in', 'comparisonWord'),
                      #('not', 'comparisonWord'),
+                     ('lambda', 'lambda'),
                      ('if', 'conditional'),
-                     ('else', 'conditional'),
                      ('for', 'loop'),
                      ('in', 'loopParam'),
                      ('True', 'boolean'),
                      ('False', 'boolean'),
                      ('quit', 'quit'),
-                     ('\n', 'linebreak'),
+                     #('\n', 'linebreak'),
                      (' ', 'whitespace'),
 
                      ))

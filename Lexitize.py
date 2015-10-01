@@ -37,6 +37,3 @@ class Lexitize():
         lexPieces = self.cleanWhiteSpace(lexPieces)
         return deque(lexPieces)
 
-
-
-
