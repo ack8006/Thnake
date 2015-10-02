@@ -1,4 +1,3 @@
-from collections import deque
 from Scope import Scope
 from Lexitize import Lexitize
 from Treeitize import Treeitize
@@ -11,15 +10,20 @@ class Analyze():
     def analyze(self, tree):
 
         def simplifyObject(objectString):
-            objLex = Lexitize().lexitize(str(objectString))
+            if isinstance(objectString, basestring):
+                objectString = "'{}'".format(objectString)
+            objLex = Lexitize().lexitize(str(objectString))[0]
             tree = Treeitize().treeitize(objLex)[0]
             return tree
 
-        def analyzeObject(objectVariable):
-            topValue = objectVariable.popleft()['value']
-            parVal = objectVariable.popleft()['value']
+        def getTopObjectAndParameter(objectVariable):
+            return (objectVariable.popleft()['value'],
+                    objectVariable.popleft()['value'])
 
-            if topValue in ['number', 'boolean', 'string']:
+        def analyzeObject(objectVariable):
+            topValue, parVal = getTopObjectAndParameter(objectVariable)
+
+            if topValue in ['number', 'boolean', 'string', None]:
                 return parVal
             elif topValue == 'list':
                 newList = []
@@ -28,22 +32,16 @@ class Analyze():
                 return newList
 
         def analyzeVariable(objectVariable):
-            variable = objectVariable.popleft()
-            variableValue = None
-            if objectVariable:
-                variableValue = objectVariable.pop()['value']
-                simplifiedVariable = simplifyObject(self.analyze(variableValue))
-                self.scope.add(variable['value'],
-                               simplifiedVariable)
+            variable, variableValue = getTopObjectAndParameter(objectVariable)
+            if variableValue == None:
+                variableTree = self.scope.get(variable)
+                return self.analyze(variableTree)
             else:
-                varTree = self.scope.get(variable['value'])
-                if varTree == None:
-                    raise IndexError
-                return self.analyze(varTree)
+                simplifiedVariable = simplifyObject(self.analyze(variableValue))
+                self.scope.add(variable, simplifiedVariable)
 
         def analyzeOpComp(objectVariable):
-            operator = objectVariable.popleft()['value']
-            values = objectVariable.popleft()['value']
+            operator, values = getTopObjectAndParameter(objectVariable)
 
             val1 = self.analyze(values.popLeftObject())
             val2 = self.analyze(values.popLeftObject())
@@ -54,45 +52,61 @@ class Analyze():
             return eval(str(val1) + operator + str(val2))
 
         def analyzeConditional(objectVariable):
-            conditional = objectVariable.popleft()['value']
-            parVal = objectVariable.popleft()['value']
+            conditional, parVal = getTopObjectAndParameter(objectVariable)
 
             #true or false to conditional
-            compVal = analyzeOpComp(parVal.popLeftObject())
+            values = parVal.pop()
+            ifValueTree = values.popleft()
+            compVal = analyzeOpComp(parVal)
 
-            ifValue = parVal.popLeftObject()
             if compVal:
-                return self.analyze(ifValue)
-            elif not compVal and parVal:
-                elseValue = parVal.popLeftObject()
-                return self.analyze(elseValue)
+                return executeConditionStructure(ifValueTree)
+            elif not compVal and values:
+                elseValue = values.pop()
+                return executeConditionStructure(elseValue)
 
         def analyzeLoop(objectVariable):
-            loop = objectVariable.popleft()['value']
-            parVal = objectVariable.popleft()['value']
+            loop, parVal = getTopObjectAndParameter(objectVariable)
+            if loop == 'while':
+                analyzeWhileLoop(parVal)
+            elif loop == 'for':
+                analyzeForLoop(parVal)
 
-            loopVar = parVal.popleft()['value']
+        def analyzeWhileLoop(parVal):
+            loopCondition = parVal.popLeftObject()
+            while self.analyze(copy.deepcopy(loopCondition)):
+                executeConditionStructure(parVal)
+
+        def analyzeForLoop(parVal):
+            loopVar = parVal.popLeftObject().popleft()['value']
             loopList = parVal.popLeftObject()
+            loopList = self.analyze(loopList)
+            loopList = simplifyObject(loopList).pop()['value']
 
             variableExists = False
             if self.scope.get(loopVar):
                 variableExists = True
 
-            loopList = self.analyze(loopList)
-            loopList = simplifyObject(loopList).pop()['value']
-
             while loopList:
                 currentVarIteration = loopList.popLeftObject()
                 self.scope.add(loopVar, currentVarIteration)
-                result = self.analyze(copy.deepcopy(parVal))
-                if result is not None:
-                    print result
+                executeConditionStructure(parVal)
+
             if not variableExists:
                 self.scope.pop(loopVar)
 
+        def executeConditionStructure(parVal):
+            parVal = copy.deepcopy(parVal)
+            while parVal:
+                result = self.analyze(parVal.popLeftObject())
+                if result is not None:
+                    print result
+            return result
+
+
         def analyzeAttribFunc(objectVariable):
-            attribFunc = objectVariable.popleft()['value']
-            parVal = objectVariable.popleft()['value']
+            attribFunc, parVal = getTopObjectAndParameter(objectVariable)
+
             functionParameterTree = parVal.popleft()
             functionObjectTree = parVal.pop()
 

@@ -7,8 +7,10 @@ def run_program(x):
     lexitize = Lexitize()
     treeitize = Treeitize()
     analyze = Analyze()
-    lex = lexitize.lexitize(x)
-    tree = treeitize.treeitize(lex)[0]
-    output = analyze.analyze(tree)
-    if output is not None:
-        return output
+
+    lexOfLexes= lexitize.lexitize(x)
+    for lex in lexOfLexes:
+        tree = treeitize.treeitize(lex)[0]
+        output = analyze.analyze(tree)
+        if output is not None:
+            return output

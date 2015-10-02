@@ -61,6 +61,7 @@ def treeitizeShunting(outputStack, precedence):
         return tree, outputStack
     elif outputStack[-1] not in precedence:
         tree.addToTree('variable', outputStack.pop())
+        tree.addToTree('parameters', None)
         return tree, outputStack
     else:
         tree.addToTree('arithmetic', outputStack.pop())

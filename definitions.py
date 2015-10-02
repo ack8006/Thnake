@@ -33,14 +33,17 @@ specialCharacters = OrderedDict((
                      #('is', 'comparisonWord'),
                      #('in', 'comparisonWord'),
                      #('not', 'comparisonWord'),
-                     ('lambda', 'lambda'),
+                     #('lambda', 'lambda'),
                      ('if', 'conditional'),
                      ('for', 'loop'),
+                     ('while', 'loop'),
                      ('in', 'loopParam'),
                      ('True', 'boolean'),
                      ('False', 'boolean'),
-                     ('quit', 'quit'),
-                     #('\n', 'linebreak'),
+                     ('None', 'NullValue'),
+                     #('quit', 'quit'),
+                     ('\n', 'linebreak'),
+                     ('\t', 'tabs'),
                      (' ', 'whitespace'),
 
                      ))
@@ -51,26 +54,16 @@ objectTypes = [
     'object',
     'variable',
     'conditional',
+
 ]
 
 
-typeAnalysis = {
-    'arithmetic': None,
-    'comparison': None,
-    'object': None,
-    'variable': None,
-    'conditional': None,
-    'loop': None,
-}
-
-
-paramDefs = {'arithmetic': 2,
-             'object': 1,
-             'variable': 1,
-             'parameters':None,
-             'comparison': None,
-             'conditional':None,
-             'attribFunc':None,
-             }
-
+#typeAnalysis = {
+#    'arithmetic': None,
+#    'comparison': None,
+#    'object': None,
+#    'variable': None,
+#    'conditional': None,
+#    'loop': None,
+#}
 

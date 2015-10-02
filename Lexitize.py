@@ -9,7 +9,7 @@ class Lexitize():
 
     @staticmethod
     def cleanWhiteSpace(lex):
-        lex = [x for x in lex if x not in [' ','']]
+        lex = [x for x in lex if x not in ['\t', ' ','']]
         return lex
 
     @staticmethod
@@ -30,10 +30,36 @@ class Lexitize():
                 splitLex.pop()
         return splitLex
 
+    def parseLinebreaks(self, lexPieces):
+        lexOfLexes = []
+        currentLex = deque([])
+        structureCount = 0
+        while lexPieces:
+            current = lexPieces.pop(0)
+            if current == '{':
+                currentLex.append(current)
+                structureCount += 1
+            elif current == '}':
+                currentLex.append(current)
+                structureCount -= 1
+            elif current != '\n':
+                currentLex.append(current)
+            elif (current == '\n' and structureCount !=0):
+                currentLex.append(current)
+                pass
+            elif currentLex:
+                lexOfLexes.append(currentLex)
+                currentLex = deque([])
+        if currentLex:
+            lexOfLexes.append(currentLex)
+        return lexOfLexes
+
     def lexitize(self, inp):
         lexPieces = [inp]
         for x in specialCharacters.keys():
             lexPieces = self.splitLexPieces(iter(lexPieces), x)
         lexPieces = self.cleanWhiteSpace(lexPieces)
-        return deque(lexPieces)
+        lexOfLexes = self.parseLinebreaks(lexPieces)
+        return lexOfLexes
+        #return deque(lexPieces)
 

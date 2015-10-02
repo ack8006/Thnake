@@ -4,23 +4,19 @@ import unittest
 class TestComparison(unittest.TestCase):
 
     def test_string(self):
-        x = 'test'
+        x = "'test'"
         assert(run_program(x) == 'test')
 
     def test_string2(self):
-        x = "test"
+        x = '"test"'
         assert(run_program(x) == 'test')
 
-    def test_string_interior(self):
-        x = 'te"""st'
-        assert(run_program(x) == 'te"""st')
-
     def test_string_comparison(self):
-        x = 'te3==3st'
+        x = "'te3==3st'"
         assert(run_program(x) == 'te3==3st')
 
     def test_string_conditional(self):
-        x = 'teifst'
+        x = '"teifst"'
         assert(run_program(x) == 'teifst')
 
 def main():
