@@ -52,18 +52,21 @@ class Analyze():
             return eval(str(val1) + operator + str(val2))
 
         def analyzeConditional(objectVariable):
+            #conditional currently unused, but needed if eventually diff cond types
             conditional, parVal = getTopObjectAndParameter(objectVariable)
 
-            #true or false to conditional
             values = parVal.pop()
             ifValueTree = values.popleft()
-            compVal = analyzeOpComp(parVal)
+            elseValueTree = values.popleft()
+            comparisonValue= analyzeOpComp(parVal)
 
-            if compVal:
-                return executeConditionStructure(ifValueTree)
-            elif not compVal and values:
-                elseValue = values.pop()
-                return executeConditionStructure(elseValue)
+            if comparisonValue:
+                executeConditionStructure(ifValueTree)
+                #return executeConditionStructure(ifValueTree)
+            elif elseValueTree:
+                executeConditionStructure(elseValueTree)
+                #return executeConditionStructure(elseValueTree)
+            else: return
 
         def analyzeLoop(objectVariable):
             loop, parVal = getTopObjectAndParameter(objectVariable)
@@ -72,6 +75,7 @@ class Analyze():
             elif loop == 'for':
                 analyzeForLoop(parVal)
 
+        #***PRINTING HERE INSTEAD OF THNAKE
         def analyzeWhileLoop(parVal):
             loopCondition = parVal.popLeftObject()
             while self.analyze(copy.deepcopy(loopCondition)):

@@ -10,15 +10,18 @@ def execute_program(programInput, lexitize, treeitize, analyze):
     if programInput == 'quit':
         sys.exit(0)
     lexOfLexes = lexitize.lexitize(programInput)
+    #print lexOfLexes
     for lex in lexOfLexes:
         #print lex
         tree = treeitize.treeitize(lex)[0]
         #print tree
-        #while tree:
-        output = analyze.analyze(tree.popLeftObject())
-        if output is not None:
-            return output
-            #print output
+        while tree:
+            output = analyze.analyze(tree.popLeftObject())
+            if output is not None:
+                #****REALLY SHOUDLN'T BE RETURNING ANYTHING...
+                print output
+                #return output
+    return output
 
 
 if __name__ == "__main__":

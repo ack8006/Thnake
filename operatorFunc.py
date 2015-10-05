@@ -19,7 +19,10 @@ def shuntingYardAlgo(lex, tree):
     shunt = True
     while len(lex) >0:
         token = lex[0]
-        if token.isdigit():
+        if token is object:
+            outputStack.append(tree.popRightObject())
+            lex.popleft()
+        elif token.isdigit():
             outputStack.append(token)
             lex.popleft()
         elif token in precedence:
@@ -55,6 +58,9 @@ def shuntingYardAlgo(lex, tree):
 
 def treeitizeShunting(outputStack, precedence):
     tree = Tree()
+    if type(outputStack[-1]) == Tree:
+        tree += outputStack.pop()
+        return tree, outputStack
     if outputStack[-1].isdigit():
         tree.addToTree('object', 'number')
         tree.addToTree('parameters', int(outputStack.pop()))

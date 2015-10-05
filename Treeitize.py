@@ -25,13 +25,13 @@ class Treeitize():
                 return tree, lex
 
             #***handle negative HERE
-            if curLex.isdigit() or curLex == '-': #and not currentBranch:
+            if curLex.isdigit() or curLex == '-':
                 lex.appendleft(curLex)
                 lex, parTree = shuntingYardAlgo(lex, tree)
                 tree += parTree
 
             #*** currently parens indicate arithmetic
-            elif curLex in ['(',')']: #and not currentBranch:
+            elif curLex in ['(',')']:
                 lex.appendleft(curLex)
                 lex, parTree = shuntingYardAlgo(lex, tree)
                 tree += parTree
@@ -55,15 +55,11 @@ class Treeitize():
                     valTree, lex = self.treeitize(lex)
                     tree.addToTree('parameters', valTree)
 
-                #gets here if variable then arithmetic sym
-
-                #****Needed or loop?
-                #if arithmetic on a variable
+                #gets here if object then arithmetic sym
                 elif (spCh == 'arithmetic'):
                     lex.appendleft(curLex)
-                    var = tree.popLeftObject().popleft()['value']
-                    lex.appendleft(var)
-                    lex, parTree = shuntingYardAlgo(lex, tree)
+                    lex.appendleft(object)
+                    lex, parTree = shuntingYardAlgo(lex, tree.popRightObject())
                     tree += parTree
 
                 # STRINGS
@@ -139,9 +135,6 @@ class Treeitize():
                     if lex and lex.popleft() == '{':
                         elseTree = getStructureTree()
 
-                    print 'TREES'
-                    print ifTree
-                    print elseTree
                     conTree.append(Tree([ifTree, elseTree]))
                     tree.addToTree('parameters', conTree)
 
@@ -149,13 +142,11 @@ class Treeitize():
                     tree.addToTree(spCh, curLex)
 
                     loopParam, lex = self.treeitize(lex)
-                    #listTree, lex = self.treeitize(lex)
                     loopActionTree = Tree([])
                     while lex:
                         actionTree, lex = self.treeitize(lex)
                         loopActionTree += actionTree
 
-                    #***TREE FUNCT to consolidate multiple trees
                     values = Tree()
                     for x in [loopParam, loopActionTree]:
                         values += x

@@ -26,6 +26,13 @@ class TestArithmetic(unittest.TestCase):
         x = '3+4*6-(15-2)**2'
         assert(run_program(x) == -142)
 
+    def test_arrayAccess1(self):
+        x = '[1,2].get(0) + 3'
+        assert(run_program(x) == 4)
+
+    def test_arrayAccess2(self):
+        x = '3 + [1,2].get(0)'
+        assert(run_program(x) == 4)
 
 def main():
     unittest.main()
