@@ -3,7 +3,7 @@ from Lexitize import Lexitize
 from Treeitize import Treeitize
 import copy
 
-class Analyze():
+class Analyze(object):
     def __init__(self):
         self.scope = Scope()
 

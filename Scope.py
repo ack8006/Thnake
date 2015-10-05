@@ -1,6 +1,6 @@
 import copy
 
-class Scope():
+class Scope(object):
     def __init__(self):
         self.variables = {}
 

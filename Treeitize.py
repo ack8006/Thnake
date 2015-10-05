@@ -4,7 +4,7 @@ from Tree import Tree
 from collections import deque
 
 
-class Treeitize():
+class Treeitize(object):
     def __init__(self):
         pass
 

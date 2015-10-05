@@ -3,7 +3,7 @@ from definitions import *
 import re
 
 
-class Lexitize():
+class Lexitize(object):
     def __init__(self):
         pass
 
