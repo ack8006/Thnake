@@ -3,17 +3,19 @@ import unittest
 import sys
 from StringIO import StringIO
 
+lexitize = Lexitize()
+treeitize = Treeitize()
+analyze = Analyze()
+
 class TestComparison(unittest.TestCase):
     def test_if(self):
         x = 'if 1==1 {5}'
         output = run_and_get_stdout(x)
         assert(output == str(5))
 
-        #assert(execute_program(x) == 5)
-
     def test_if_fail(self):
         x = 'if 1==2 {5}'
-        assert(execute_program(x) == None)
+        assert(execute_program(x, lexitize, treeitize, analyze) == None)
 
     def test_if_else_pass(self):
         x = 'if 5==5 {"pass"}{False}'
@@ -44,6 +46,6 @@ class TestComparison(unittest.TestCase):
 def run_and_get_stdout(x):
     out = StringIO()
     sys.stdout = out
-    execute_program(x)
+    execute_program(x, lexitize, treeitize, analyze)
     output = out.getvalue().strip()
     return output
