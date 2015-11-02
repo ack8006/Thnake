@@ -1,39 +1,49 @@
-from ..__init__ import *
+from ..thnake import *
 import unittest
+import sys
+from StringIO import StringIO
 
 class TestComparison(unittest.TestCase):
     def test_if(self):
         x = 'if 1==1 {5}'
-        assert(run_program(x) == 5)
+        output = run_and_get_stdout(x)
+        assert(output == str(5))
+
+        #assert(execute_program(x) == 5)
 
     def test_if_fail(self):
         x = 'if 1==2 {5}'
-        assert(run_program(x) == None)
+        assert(execute_program(x) == None)
 
     def test_if_else_pass(self):
         x = 'if 5==5 {"pass"}{False}'
-        assert(run_program(x) == 'pass')
+        output = run_and_get_stdout(x)
+        assert(output == 'pass')
 
     def test_if_else_false(self):
         x = 'if 5==4 {True}{False}'
-        assert(run_program(x) == False)
+        output = run_and_get_stdout(x)
+        assert(output == str(False))
 
     def test_if_else_types(self):
         x = 'if 5==5 {4+5*3}{3==3}'
-        assert(run_program(x) == 19)
+        output = run_and_get_stdout(x)
+        assert(output == str(19))
 
-    def test_if_else_pass(self):
+    def test_if_else_pass_conditional(self):
         x = 'if 5==4 {4+5*3}{3==3}'
-        assert(run_program(x) == True)
+        output = run_and_get_stdout(x)
+        assert(output == str(True))
 
     def test_if_else_nested(self):
         x = 'if 5==4 {False}{if 1==1 {True}}'
-        assert(run_program(x) == True)
+        output = run_and_get_stdout(x)
+        assert(output == str(True))
 
 
-
-def main():
-    unittest.main()
-
-if __name__ == '__main__':
-    main()
+def run_and_get_stdout(x):
+    out = StringIO()
+    sys.stdout = out
+    execute_program(x)
+    output = out.getvalue().strip()
+    return output
