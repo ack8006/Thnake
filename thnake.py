@@ -6,7 +6,11 @@ import os.path
 
 
 
-def execute_program(programInput, lexitize, treeitize, analyze):
+def execute_program(programInput):
+    lexitize = Lexitize()
+    treeitize = Treeitize()
+    analyze = Analyze()
+
     if programInput == 'quit':
         sys.exit(0)
     lexOfLexes = lexitize.lexitize(programInput)
@@ -25,9 +29,6 @@ def execute_program(programInput, lexitize, treeitize, analyze):
 
 
 if __name__ == "__main__":
-    lexitize = Lexitize()
-    treeitize = Treeitize()
-    analyze = Analyze()
     programInput = None
 
     if len(sys.argv) > 1:
@@ -35,7 +36,8 @@ if __name__ == "__main__":
         if fileExtension == '.thnk':
             with open(sys.argv[1], 'r') as f:
                 programInput = f.read()
-                execute_program(programInput, lexitize, treeitize, analyze)
+                #execute_program(programInput, lexitize, treeitize, analyze)
+                execute_program(programInput)
 
         elif fileExtension:
             'Please Input File of Type .thnk'
@@ -44,7 +46,8 @@ if __name__ == "__main__":
     else:
         while True:
             programInput = raw_input('>>> ')
-            execute_program(programInput, lexitize, treeitize, analyze)
+            #execute_program(programInput, lexitize, treeitize, analyze)
+            execute_program(programInput)
 
 
             #if x == 'quit':

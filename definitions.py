@@ -54,6 +54,7 @@ objectTypes = [
     'object',
     'variable',
     'conditional',
+    'attribFunc'
 
 ]
 
